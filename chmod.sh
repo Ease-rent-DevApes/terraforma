@@ -13,3 +13,4 @@ done
 
 # Print a confirmation message
 echo "All files in the $directory directory have been made executable."
+echo " Z A R I G A T A    S C R I P T S "

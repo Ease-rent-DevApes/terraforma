@@ -46,7 +46,7 @@ echo " ========================   E A S E .  R E N T  DevOps Script    =========
 
 
 
-echo " D O C K E R   I N S T A L A T I O N "
 
-curl -fsSL https://get.docker.com | bash
-echo "q"
+
+
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash

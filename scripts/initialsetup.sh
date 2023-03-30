@@ -52,7 +52,7 @@ timedatectl set-timezone UTC
 apt-get -y install nano
 
 echo "TIME SET AND CLEARED"
-
+echo " Z A R I G A T A    S C R I P T S "
 
 
 
