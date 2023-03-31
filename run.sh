@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the directory containing the Bash files
-directory="./scripts"
+directory="/scripts"
 
 # Get the list of Bash files in the directory
 files=$(find "$directory" -name "*.sh" -type f)
