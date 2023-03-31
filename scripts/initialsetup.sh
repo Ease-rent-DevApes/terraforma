@@ -45,11 +45,13 @@ echo "                                         *                                
 echo " ========================   E A S E .  R E N T  DevOps Script    =========================" 
 
 
-sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get update 
+sudo apt-get upgrade -y
 
 timedatectl set-timezone UTC
 
 apt-get -y install nano
+
 
 echo "TIME SET AND CLEARED"
 echo " Z A R I G A T A    S C R I P T S "
