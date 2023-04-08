@@ -44,44 +44,38 @@ echo "                                         @.                               
 echo "                                         *                                                "
 echo " ========================   E A S E .  R E N T  DevOps Script    ========================="
 
-apt-get update && apt-get install -y apt-transport-https
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+#!/bin/bash
+
+# Install Docker if it is not already installed
+if ! command -v docker &> /dev/null; then
+    echo "Docker not found. Installing Docker..."
+    apt-get update
+    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io
+    systemctl enable docker.service
+    systemctl start docker.service
+    echo "Docker installed successfully."
+else
+    echo "Docker is already installed."
+fi
+
+# Add Kubernetes repository to the system
+echo "Adding Kubernetes repository..."
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 apt-get update
+
+# Install kubelet, kubeadm, kubectl
+echo "Installing Kubernetes components..."
 apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+echo "Kubernetes components installed successfully."
 
-echo "{\"exec-opts\": [\"native.cgroupdriver=systemd\"]}" > /etc/docker/daemon.json
-systemctl daemon-reload
-systemctl restart docker
-systemctl restart kubelet
-
-hostnamectl set-hostname
-hostname -i
-
-echo "Desativando swap"
-
-swapoff -a
-sed -e '/swapfile/ s/^#*/#/' -i /etc/fstab
-
-rm /etc/containerd/config.toml
-systemctl restart containerd
-
-kubeadm init --apiserver-advertise-address $(hostname -i)
-
-export KUBECONFIG=/etc/kubernetes/admin.conf
-
-mkdir -p $HOME/.kube
-cat /etc/kubernetes/admin.conf > $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
-
-echo "Instalando Cloud Weave"
-
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-
-kubectl taint nodes $(hostname) node-role.kubernetes.io/master-
-kubectl taint nodes $(hostname) node-role.kubernetes.io/control-plane-
-
-systemctl restart kubelet
-
-
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# Enable and start kubelet service
+echo "Enabling and starting kubelet service..."
+systemctl enable kubelet.service
+systemctl start kubelet.service
+echo "Kubelet service enabled and started."
