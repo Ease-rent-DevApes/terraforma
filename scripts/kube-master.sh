@@ -44,25 +44,30 @@ echo "                                         @.                               
 echo "                                         *                                                "
 echo " ========================   E A S E .  R E N T  DevOps Script    ========================="
 
+
 #!/bin/bash
 
-# Import MongoDB GPG Key
-wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | sudo apt-key add -
+echo "Initiating Kubernetes Server..."
 
-# Create MongoDB list file
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+kubeadm init --control-plane-endpoint $(hostname -i)
 
-# Reload the package database
-sudo apt-get update
+echo "Setting access..."
 
-# Install MongoDB
-sudo apt-get install -y mongodb-org
+export KUBECONFIG=/etc/kubernetes/admin.conf
 
-# Start MongoDB Service
-sudo systemctl start mongod
+mkdir -p $HOME/.kube
+cat /etc/kubernetes/admin.conf > $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
 
-# Enable MongoDB to start on boot
-sudo systemctl enable mongod
+echo "Installing Cloud Weave..."
 
-# Check MongoDB status
-sudo systemctl status mongod
+kubectl apply -f "https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s-1.11.yaml"
+
+echo "Fixing taint..."
+
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+kubectl taint nodes --all node-role.kubernetes.io/master-
+
+systemctl restart kubelet
+
+echo "Kubernetes restarted."

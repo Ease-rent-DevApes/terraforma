@@ -46,28 +46,36 @@ echo " ========================   E A S E .  R E N T  DevOps Script    =========
 
 
 #!/bin/bash
+echo "Disabling Swap..."
 
-# Update package list
-sudo apt-get update
+swapoff -a
+sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
-# Install required dependencies
-sudo apt-get install -y curl gnupg
+echo "Setting kernel..."
 
-# Import RabbitMQ signing key
-curl -fsSL https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc | sudo apt-key add -
+echo "Setting kernel..."
 
-# Add RabbitMQ APT repository to package sources
-echo "deb https://dl.bintray.com/rabbitmq-erlang/debian $(lsb_release -cs) erlang" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
-echo "deb https://dl.bintray.com/rabbitmq/debian $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
+tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
 
-# Update package list again
-sudo apt-get update
+modprobe overlay
+modprobe br_netfilter
 
-# Install RabbitMQ
-sudo apt-get install -y rabbitmq-server
+tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
 
-# Start RabbitMQ service
-sudo systemctl start rabbitmq-server
+sysctl --system
 
-# Enable RabbitMQ service on boot
-sudo systemctl enable rabbitmq-server
+echo "Setting Containerd..."
+
+containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+systemctl restart containerd
+systemctl enable containerd
+
+echo "Kubernetes configured."
