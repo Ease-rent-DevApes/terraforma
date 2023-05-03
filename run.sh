@@ -1,31 +1,7 @@
-#!/bin/bash
+bash /home/$USER/scripts/initialsetup.sh && \
+bash /home/$USER/install/docker.sh && \
+bash /home/$USER/install/kube.sh && \
+bash /home/$USER/install/kube-config.sh && \
+bash /home/$USER/install/kube-master.sh && \
+bash /home/$USER/install/helm.sh
 
-# Set the directory containing the Bash files
-directory="/scripts"
-
-# Get the list of Bash files in the directory
-files=$(find "$directory" -name "*.sh" -type f)
-
-# Print the list of files and ask the user which ones to run
-echo "Select the scripts to run:"
-echo "a) All scripts"
-for file in $files; do
-  echo "$(basename "$file")"
-done
-read -rp "Enter the script numbers (separated by spaces): " choices
-
-# Execute the selected scripts
-for choice in $choices; do
-  if [[ "$choice" == "a" ]]; then
-    for file in $files; do
-      bash "$file"
-    done
-  else
-    file="$directory/$(sed -n "${choice}p" <<< "$files")"
-    if [[ -x "$file" ]]; then
-      bash "$file"
-    else
-      echo "Error: $file is not executable."
-    fi
-  fi
-done
